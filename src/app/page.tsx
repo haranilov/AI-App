@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { CopyableItem } from "@/components/CopyableItem";
 import { ResultCard } from "@/components/ResultCard";
 import { generateHooks } from "@/lib/generate";
+import { copyToClipboard, dismissKeyboard, hapticLight, shareText } from "@/lib/native";
 import { translations, type Lang } from "@/lib/translations";
 import type { GenerateResponse } from "@/types/generate";
 
@@ -54,15 +56,29 @@ export default function Home() {
     }
   }, []);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    void generate(topic, lang);
+  function submitTopic(topicValue: string) {
+    void dismissKeyboard();
+    void generate(topicValue, lang);
   }
 
-  async function handleCopyAll() {
-    if (!result) return;
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const value = new FormData(e.currentTarget).get("topic");
+    submitTopic(typeof value === "string" ? value : topic);
+  }
 
-    const text = [
+  function handleTopicKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key !== "Enter" || e.shiftKey || e.nativeEvent.isComposing) return;
+    e.preventDefault();
+    if (loading) return;
+    const value = e.currentTarget.value;
+    if (!value.trim()) return;
+    submitTopic(value);
+  }
+
+  function buildResultText() {
+    if (!result) return "";
+    return [
       t.hooksHeader,
       ...result.hooks.map((h, i) => `${i + 1}. ${h}`),
       "",
@@ -72,13 +88,27 @@ export default function Home() {
       t.scriptHeader,
       result.script,
     ].join("\n");
+  }
 
+  async function handleCopyAll() {
+    if (!result) return;
     try {
-      await navigator.clipboard.writeText(text);
+      await copyToClipboard(buildResultText());
+      void hapticLight();
       setCopyAllDone(true);
       setTimeout(() => setCopyAllDone(false), 2000);
     } catch {
       setError(t.errorClipboard);
+    }
+  }
+
+  async function handleShareAll() {
+    if (!result) return;
+    const shared = await shareText("HookAI", buildResultText());
+    if (!shared) {
+      setError(t.shareUnavailable);
+    } else {
+      void hapticLight();
     }
   }
 
@@ -91,64 +121,65 @@ export default function Home() {
   }
 
   return (
-    <PageShell>
-      <header className="border-b border-[#e8e8e8] bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-2.5">
+    <div className="page-shell">
+      <header className="app-header sticky top-0 z-20 border-b border-[#e8e8e8] bg-white/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
+          <div className="flex min-w-0 items-center gap-2.5">
             <LogoMarkIcon />
-            <span className="text-lg font-semibold tracking-tight text-gray-900">
-              HookAI
-            </span>
-            <span className="hidden rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-500 sm:inline">
-              Pro
-            </span>
+            <div className="min-w-0">
+              <span className="block text-lg font-semibold tracking-tight text-gray-900">
+                HookAI
+              </span>
+              <span className="block truncate text-[11px] text-gray-500">{t.tagline}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <p className="hidden text-xs text-gray-500 sm:block">{t.tagline}</p>
-            <button
-              type="button"
-              onClick={toggleLang}
-              className="rounded-[10px] border border-[#e8e8e8] bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
-              title={lang === "en" ? "Switch to Russian" : "Switch to English"}
-            >
-              {lang === "en" ? "RU" : "EN"}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={toggleLang}
+            className="touch-target touch-active shrink-0 rounded-[10px] border border-[#e8e8e8] bg-white px-4 text-xs font-semibold text-gray-700 shadow-sm"
+            title={lang === "en" ? "Switch to Russian" : "Switch to English"}
+          >
+            {lang === "en" ? "RU" : "EN"}
+          </button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 pb-20 pt-10 sm:px-6 sm:pt-16">
-        <div className="mb-10 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+      <main
+        className={`app-main mx-auto w-full max-w-lg px-4 pt-6 sm:px-6 ${
+          result ? "pb-[calc(5.5rem+env(safe-area-inset-bottom))]" : "pb-6"
+        }`}
+      >
+        <div className="mb-6 text-center">
+          <h1 className="text-[1.625rem] font-semibold leading-tight tracking-tight text-gray-900">
             {t.headline}
           </h1>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-gray-500">
+          <p className="mx-auto mt-2.5 max-w-sm text-[15px] leading-relaxed text-gray-500">
             {t.subheadline}
           </p>
+          <p className="mx-auto mt-2 max-w-sm text-xs text-gray-400">{t.aiDisclosure}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mb-8">
-          <div className="rounded-[14px] border border-[#e8e8e8] bg-white p-2 shadow-[0_2px_16px_rgba(0,0,0,0.06)] transition-shadow focus-within:shadow-[0_4px_24px_rgba(0,0,0,0.08)] focus-within:ring-2 focus-within:ring-gray-900/5">
+        <form onSubmit={handleSubmit} className="mb-6">
+          <div className="overflow-hidden rounded-2xl border border-[#e8e8e8] bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)]">
             <textarea
+              name="topic"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder={t.placeholder}
               rows={3}
               disabled={loading}
-              className="w-full resize-none rounded-[12px] border-0 bg-transparent px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:opacity-60"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  (e.target as HTMLTextAreaElement).form?.requestSubmit();
-                }
-              }}
+              inputMode="text"
+              enterKeyHint="go"
+              autoComplete="off"
+              autoCorrect="on"
+              className="ios-input w-full resize-none border-0 bg-transparent px-4 py-3.5 text-gray-900 placeholder:text-gray-400 focus:outline-none disabled:opacity-60"
+              onKeyDown={handleTopicKeyDown}
             />
-            <div className="flex items-center justify-between gap-3 border-t border-[#f0f0f0] px-2 py-2">
-              <p className="px-2 text-xs text-gray-400">{t.hint}</p>
+            <div className="border-t border-[#f0f0f0] p-3">
               <button
                 type="submit"
                 disabled={loading || !topic.trim()}
-                className="inline-flex items-center gap-2 rounded-[12px] bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="touch-target touch-active flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 px-5 py-3.5 text-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? (
                   <>
@@ -162,18 +193,19 @@ export default function Home() {
                   </>
                 )}
               </button>
+              <p className="mt-2 text-center text-[11px] text-gray-400">{t.hint}</p>
             </div>
           </div>
         </form>
 
         {modeHint && !error && (
-          <p className="mb-4 text-center text-xs text-gray-400">{modeHint}</p>
+          <p className="mb-4 text-center text-xs leading-relaxed text-gray-400">{modeHint}</p>
         )}
 
         {error && (
           <div
             role="alert"
-            className="mb-6 flex items-start gap-3 rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
           >
             <AlertIcon />
             <span>{error}</span>
@@ -184,47 +216,26 @@ export default function Home() {
 
         {result && (
           <div className={loading ? "pointer-events-none opacity-60" : ""}>
-            <div className="space-y-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-gray-500">
-                  {loading
-                    ? t.regenerating
-                    : t.done(result.hooks.length, result.titles.length)}
-                </p>
-                <ResultActions
-                  copyAllDone={copyAllDone}
-                  loading={loading}
-                  t={t}
-                  onCopyAll={() => void handleCopyAll()}
-                  onRegenerate={() => void generate(topic, lang)}
-                />
-              </div>
+            <div className="space-y-5">
+              <p className="text-center text-sm text-gray-500">
+                {loading
+                  ? t.regenerating
+                  : t.done(result.hooks.length, result.titles.length)}
+              </p>
 
-              <ResultCard
-                title={t.hooksTitle}
-                subtitle={t.hooksSubtitle}
-                icon={<HookIcon />}
-              >
+              <ResultCard title={t.hooksTitle} subtitle={t.hooksSubtitle} icon={<HookIcon />}>
                 {result.hooks.map((hook, i) => (
                   <CopyableItem key={`hook-${i}`} text={hook} index={i + 1} lang={lang} />
                 ))}
               </ResultCard>
 
-              <ResultCard
-                title={t.titlesTitle}
-                subtitle={t.titlesSubtitle}
-                icon={<TitleIcon />}
-              >
+              <ResultCard title={t.titlesTitle} subtitle={t.titlesSubtitle} icon={<TitleIcon />}>
                 {result.titles.map((title, i) => (
                   <CopyableItem key={`title-${i}`} text={title} index={i + 1} lang={lang} />
                 ))}
               </ResultCard>
 
-              <ResultCard
-                title={t.scriptTitle}
-                subtitle={t.scriptSubtitle}
-                icon={<ScriptIcon />}
-              >
+              <ResultCard title={t.scriptTitle} subtitle={t.scriptSubtitle} icon={<ScriptIcon />}>
                 <CopyableItem text={result.script} variant="script" lang={lang} />
               </ResultCard>
             </div>
@@ -232,43 +243,96 @@ export default function Home() {
         )}
 
         {!result && !loading && !error && (
-          <div className="rounded-[14px] border border-dashed border-[#e0e0e0] bg-white/50 px-6 py-12 text-center">
-            <p className="text-sm text-gray-500">
-              {t.exampleTopics}{" "}
-              <button
-                type="button"
-                className="text-gray-700 underline-offset-2 hover:underline"
-                onClick={() => setTopic(t.example1Topic)}
-              >
-                {t.example1Label}
-              </button>
-              {" · "}
-              <button
-                type="button"
-                className="text-gray-700 underline-offset-2 hover:underline"
-                onClick={() => setTopic(t.example2Topic)}
-              >
-                {t.example2Label}
-              </button>
-            </p>
+          <div className="rounded-2xl border border-dashed border-[#e0e0e0] bg-white/60 px-4 py-8 text-center">
+            <p className="mb-3 text-sm text-gray-500">{t.exampleTopics}</p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <ExampleChip label={t.example1Label} onSelect={() => setTopic(t.example1Topic)} />
+              <ExampleChip label={t.example2Label} onSelect={() => setTopic(t.example2Topic)} />
+            </div>
           </div>
         )}
+
+        <footer className="app-footer mt-10 border-t border-[#e8e8e8] pt-6 text-center text-xs text-gray-400">
+          <p>{t.footer}</p>
+          <p className="mt-2 flex items-center justify-center gap-4">
+            <Link href="/privacy/" className="touch-target inline-flex items-center underline-offset-2 active:text-gray-600">
+              {t.privacyLink}
+            </Link>
+            <Link href="/terms/" className="touch-target inline-flex items-center underline-offset-2 active:text-gray-600">
+              {t.termsLink}
+            </Link>
+          </p>
+        </footer>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 border-t border-[#e8e8e8] bg-white/90 py-3 text-center text-xs text-gray-400 backdrop-blur-sm">
-        {t.footer}
-      </footer>
-    </PageShell>
+      {result && (
+        <div className="action-bar fixed bottom-0 left-0 right-0 z-30 border-t border-[#e8e8e8] bg-white/95 px-3 pt-2 backdrop-blur-md">
+          <div className="mx-auto flex max-w-lg gap-2">
+            <ActionBarButton onClick={() => void handleShareAll()} disabled={loading}>
+              {t.shareBtn}
+            </ActionBarButton>
+            <ActionBarButton onClick={() => void handleCopyAll()} disabled={loading}>
+              {copyAllDone ? t.copiedAll : t.copyAll}
+            </ActionBarButton>
+            <ActionBarButton
+              onClick={() => {
+                void dismissKeyboard();
+                void generate(topic, lang);
+              }}
+              disabled={loading}
+              primary
+            >
+              {loading ? "…" : t.regenerate}
+            </ActionBarButton>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
-function PageShell({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen">{children}</div>;
+function ExampleChip({ label, onSelect }: { label: string; onSelect: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="touch-target touch-active rounded-full border border-[#e8e8e8] bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm active:bg-gray-50"
+    >
+      {label}
+    </button>
+  );
+}
+
+function ActionBarButton({
+  children,
+  onClick,
+  disabled,
+  primary,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  primary?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`touch-target touch-active flex flex-1 items-center justify-center rounded-xl px-2 py-3 text-sm font-semibold disabled:opacity-50 ${
+        primary
+          ? "bg-gray-900 text-white"
+          : "border border-[#e8e8e8] bg-white text-gray-700"
+      }`}
+    >
+      {children}
+    </button>
+  );
 }
 
 function LoadingBlock({ t }: { t: typeof translations.en }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
+    <div className="flex flex-col items-center justify-center py-12 text-center">
       <div className="mb-4 h-10 w-10 animate-spin-slow rounded-full border-2 border-gray-200 border-t-gray-900" />
       <p className="text-sm font-medium text-gray-700">{t.loadingText}</p>
       <p className="mt-1 text-xs text-gray-500">{t.loadingSubtext}</p>
@@ -276,44 +340,9 @@ function LoadingBlock({ t }: { t: typeof translations.en }) {
   );
 }
 
-function ResultActions({
-  copyAllDone,
-  loading,
-  t,
-  onCopyAll,
-  onRegenerate,
-}: {
-  copyAllDone: boolean;
-  loading: boolean;
-  t: typeof translations.en;
-  onCopyAll: () => void;
-  onRegenerate: () => void;
-}) {
-  return (
-    <div className="flex gap-2">
-      <button
-        type="button"
-        onClick={onCopyAll}
-        disabled={loading}
-        className="inline-flex items-center gap-1.5 rounded-[12px] border border-[#e8e8e8] bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
-      >
-        {copyAllDone ? t.copiedAll : t.copyAll}
-      </button>
-      <button
-        type="button"
-        onClick={onRegenerate}
-        disabled={loading}
-        className="inline-flex items-center gap-1.5 rounded-[12px] border border-[#e8e8e8] bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
-      >
-        {loading ? t.generating : t.regenerate}
-      </button>
-    </div>
-  );
-}
-
 function LogoMarkIcon() {
   return (
-    <div className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-gray-900 text-white">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-900 text-white">
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
         <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" />
       </svg>

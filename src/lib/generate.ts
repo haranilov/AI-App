@@ -1,9 +1,11 @@
+import { detectContentLanguage } from "@/lib/content-language";
 import type { GenerateResponse } from "@/types/generate";
+import { isNativeApp } from "@/lib/platform";
 import { extractPuterText, loadPuter } from "@/lib/puter";
 import type { Lang } from "@/lib/translations";
 
-const SYSTEM_PROMPTS: Record<Lang, string> = {
-  en: `You are an expert in viral content for TikTok, Instagram Reels and YouTube Shorts.
+function buildSystemPrompt(contentLabel: string): string {
+  return `You are an expert in viral content for TikTok, Instagram Reels and YouTube Shorts.
 Respond with ONLY valid JSON, no markdown and no explanations.
 Response format:
 {
@@ -14,33 +16,18 @@ Response format:
 Requirements:
 - hooks: 10-15 short catchy opening lines (up to 80 characters each)
 - titles: exactly 5 video titles
-- script: one 15-30 second script with sections HOOK → EXPLANATION → CALL TO ACTION (in English)
-Text: emotional, conversational, optimized for retention in the first 3 seconds.`,
-
-  ru: `Ты эксперт по вирусному контенту для TikTok, Instagram Reels и YouTube Shorts.
-Отвечай ТОЛЬКО валидным JSON без markdown и без пояснений.
-Формат ответа:
-{
-  "hooks": ["строка1", ...],
-  "titles": ["строка1", ...],
-  "script": "одна строка с переносами \\n"
+- script: one 15-30 second script with HOOK → EXPLANATION → CALL TO ACTION sections (use section labels natural for the output language)
+CRITICAL LANGUAGE RULE: Write hooks, titles, and script in the SAME LANGUAGE as the user's topic text.
+The detected topic language is ${contentLabel}. Never switch to English unless the topic itself is in English.
+Text: emotional, conversational, optimized for retention in the first 3 seconds.`;
 }
-Требования:
-- hooks: 10-15 коротких цепляющих первых фраз (до 80 символов каждая)
-- titles: ровно 5 заголовков для видео
-- script: один сценарий на 15-30 секунд с разделами ХУК → ОБЪЯСНЕНИЕ → ПРИЗЫВ (на русском)
-Текст: эмоциональный, разговорный, оптимизирован под удержание в первые 3 секунды.`,
-};
 
-const USER_PROMPTS: Record<Lang, (topic: string) => string> = {
-  en: (topic) =>
-    `Generate viral TikTok hooks, titles and a short script for the topic: "${topic}".
-Make the text as catchy, emotional and optimized for short-form video as possible.`,
+function buildUserPrompt(topic: string): string {
+  return `Generate viral TikTok hooks, titles and a short script for this topic:
+"${topic}"
 
-  ru: (topic) =>
-    `Сгенерируй вирусные TikTok хуки, заголовки и короткий сценарий для темы: «${topic}».
-Сделай текст максимально цепляющим, эмоциональным и оптимизированным под короткие видео.`,
-};
+Write every hook, title, and the full script in the exact same language as the topic above. Do not translate.`;
+}
 
 function parseAiJson(content: string): GenerateResponse {
   const cleaned = content.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
@@ -61,7 +48,7 @@ function parseAiJson(content: string): GenerateResponse {
   };
 }
 
-export function isPlaceholderKey(apiKey: string | undefined): boolean {
+function isPlaceholderKey(apiKey: string | undefined): boolean {
   if (!apiKey) return true;
   const k = apiKey.trim().toLowerCase();
   return (
@@ -147,12 +134,12 @@ async function delay(ms: number) {
   await new Promise((r) => setTimeout(r, ms));
 }
 
-async function generateWithPuter(topic: string, lang: Lang): Promise<GenerateResponse> {
+async function generateWithPuter(topic: string, contentLabel: string): Promise<GenerateResponse> {
   const puter = await loadPuter();
   const response = await puter.ai.chat(
     [
-      { role: "system", content: SYSTEM_PROMPTS[lang] },
-      { role: "user", content: USER_PROMPTS[lang](topic) },
+      { role: "system", content: buildSystemPrompt(contentLabel) },
+      { role: "user", content: buildUserPrompt(topic) },
     ],
     { model: "gemini-2.5-flash", temperature: 0.9 },
   );
@@ -160,7 +147,11 @@ async function generateWithPuter(topic: string, lang: Lang): Promise<GenerateRes
 }
 
 /** Google Gemini — free key: https://aistudio.google.com/apikey */
-async function generateWithGemini(topic: string, apiKey: string, lang: Lang): Promise<GenerateResponse> {
+async function generateWithGemini(
+  topic: string,
+  apiKey: string,
+  contentLabel: string,
+): Promise<GenerateResponse> {
   const model = "gemini-2.5-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
@@ -168,8 +159,8 @@ async function generateWithGemini(topic: string, apiKey: string, lang: Lang): Pr
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPTS[lang] }] },
-      contents: [{ role: "user", parts: [{ text: USER_PROMPTS[lang](topic) }] }],
+      systemInstruction: { parts: [{ text: buildSystemPrompt(contentLabel) }] },
+      contents: [{ role: "user", parts: [{ text: buildUserPrompt(topic) }] }],
       generationConfig: {
         temperature: 0.9,
         responseMimeType: "application/json",
@@ -192,7 +183,11 @@ async function generateWithGemini(topic: string, apiKey: string, lang: Lang): Pr
 }
 
 /** Groq — free key: https://console.groq.com/keys */
-async function generateWithGroq(topic: string, apiKey: string, lang: Lang): Promise<GenerateResponse> {
+async function generateWithGroq(
+  topic: string,
+  apiKey: string,
+  contentLabel: string,
+): Promise<GenerateResponse> {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -204,8 +199,8 @@ async function generateWithGroq(topic: string, apiKey: string, lang: Lang): Prom
       temperature: 0.9,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: SYSTEM_PROMPTS[lang] },
-        { role: "user", content: USER_PROMPTS[lang](topic) },
+        { role: "system", content: buildSystemPrompt(contentLabel) },
+        { role: "user", content: buildUserPrompt(topic) },
       ],
     }),
   });
@@ -228,7 +223,7 @@ async function generateWithGroq(topic: string, apiKey: string, lang: Lang): Prom
 async function generateWithPollinations(
   topic: string,
   apiKey: string,
-  lang: Lang,
+  contentLabel: string,
 ): Promise<GenerateResponse> {
   const res = await fetch("https://gen.pollinations.ai/v1/chat/completions", {
     method: "POST",
@@ -241,8 +236,8 @@ async function generateWithPollinations(
       temperature: 0.9,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: SYSTEM_PROMPTS[lang] },
-        { role: "user", content: USER_PROMPTS[lang](topic) },
+        { role: "system", content: buildSystemPrompt(contentLabel) },
+        { role: "user", content: buildUserPrompt(topic) },
       ],
     }),
   });
@@ -261,7 +256,11 @@ async function generateWithPollinations(
   return parseAiJson(content);
 }
 
-async function generateWithOpenAI(topic: string, apiKey: string, lang: Lang): Promise<GenerateResponse> {
+async function generateWithOpenAI(
+  topic: string,
+  apiKey: string,
+  contentLabel: string,
+): Promise<GenerateResponse> {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -273,8 +272,8 @@ async function generateWithOpenAI(topic: string, apiKey: string, lang: Lang): Pr
       temperature: 0.9,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: SYSTEM_PROMPTS[lang] },
-        { role: "user", content: USER_PROMPTS[lang](topic) },
+        { role: "system", content: buildSystemPrompt(contentLabel) },
+        { role: "user", content: buildUserPrompt(topic) },
       ],
     }),
   });
@@ -310,15 +309,18 @@ export interface GenerateResult {
 
 type ProviderFn = (topic: string) => Promise<GenerateResponse>;
 
-function buildProviderChain(lang: Lang): { fn: ProviderFn; mode: GenerateMode }[] {
-  const chain: { fn: ProviderFn; mode: GenerateMode }[] = [
-    { fn: (t) => generateWithPuter(t, lang), mode: "puter" },
-  ];
+function buildProviderChain(contentLabel: string): { fn: ProviderFn; mode: GenerateMode }[] {
+  const chain: { fn: ProviderFn; mode: GenerateMode }[] = [];
+
+  // Puter.js is unreliable inside iOS WebView and may fail App Review.
+  if (!isNativeApp()) {
+    chain.push({ fn: (t) => generateWithPuter(t, contentLabel), mode: "puter" });
+  }
 
   const gemini = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
   if (!isPlaceholderKey(gemini)) {
     chain.push({
-      fn: (t) => generateWithGemini(t, gemini!, lang),
+      fn: (t) => generateWithGemini(t, gemini!, contentLabel),
       mode: "gemini",
     });
   }
@@ -326,7 +328,7 @@ function buildProviderChain(lang: Lang): { fn: ProviderFn; mode: GenerateMode }[
   const groq = process.env.NEXT_PUBLIC_GROQ_API_KEY;
   if (!isPlaceholderKey(groq)) {
     chain.push({
-      fn: (t) => generateWithGroq(t, groq!, lang),
+      fn: (t) => generateWithGroq(t, groq!, contentLabel),
       mode: "groq",
     });
   }
@@ -334,7 +336,7 @@ function buildProviderChain(lang: Lang): { fn: ProviderFn; mode: GenerateMode }[
   const pollinations = process.env.NEXT_PUBLIC_POLLINATIONS_API_KEY;
   if (!isPlaceholderKey(pollinations)) {
     chain.push({
-      fn: (t) => generateWithPollinations(t, pollinations!, lang),
+      fn: (t) => generateWithPollinations(t, pollinations!, contentLabel),
       mode: "pollinations",
     });
   }
@@ -342,7 +344,7 @@ function buildProviderChain(lang: Lang): { fn: ProviderFn; mode: GenerateMode }[
   const openai = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
   if (!isPlaceholderKey(openai)) {
     chain.push({
-      fn: (t) => generateWithOpenAI(t, openai!, lang),
+      fn: (t) => generateWithOpenAI(t, openai!, contentLabel),
       mode: "openai",
     });
   }
@@ -356,16 +358,20 @@ function buildProviderChain(lang: Lang): { fn: ProviderFn; mode: GenerateMode }[
  * 2. Gemini / Groq / Pollinations — if a free key is set in .env.local
  * 3. Templates — always work
  */
-export async function generateHooks(topic: string, lang: Lang = "en"): Promise<GenerateResult> {
+/** @param uiLang — interface language (errors only). Output language follows the topic text. */
+export async function generateHooks(topic: string, uiLang: Lang = "en"): Promise<GenerateResult> {
   const trimmed = topic.trim();
   if (!trimmed)
-    throw new Error(lang === "ru" ? "Введите тему видео" : "Please enter a video topic");
+    throw new Error(uiLang === "ru" ? "Введите тему видео" : "Please enter a video topic");
   if (trimmed.length > 500)
     throw new Error(
-      lang === "ru" ? "Тема слишком длинная (макс. 500 символов)" : "Topic is too long (max 500 characters)",
+      uiLang === "ru"
+        ? "Тема слишком длинная (макс. 500 символов)"
+        : "Topic is too long (max 500 characters)",
     );
 
-  const chain = buildProviderChain(lang);
+  const { templateLang, label: contentLabel } = detectContentLanguage(trimmed);
+  const chain = buildProviderChain(contentLabel);
   let failedProviders = 0;
 
   for (const { fn, mode } of chain) {
@@ -379,7 +385,7 @@ export async function generateHooks(topic: string, lang: Lang = "en"): Promise<G
 
   await delay(500);
   return {
-    data: generateFromTemplates(trimmed, lang),
+    data: generateFromTemplates(trimmed, templateLang),
     mode: "templates",
     usedTemplateFallback: failedProviders > 0,
   };

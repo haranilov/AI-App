@@ -36,6 +36,11 @@ export interface Translations {
   example2Label: string;
   example2Topic: string;
   footer: string;
+  privacyLink: string;
+  termsLink: string;
+  aiDisclosure: string;
+  shareBtn: string;
+  shareUnavailable: string;
   copyLabel: string;
   copiedLabel: string;
   modeLabels: Record<string, string>;
@@ -48,7 +53,7 @@ export const translations: Record<Lang, Translations> = {
     subheadline:
       "AI hook generator for TikTok, Reels and Shorts. Enter a topic — get ready-to-film content.",
     placeholder: "Enter video topic…",
-    hint: "Enter — submit · Shift+Enter — new line",
+    hint: "Enter — generate · Shift+Enter — new line",
     generating: "Generating…",
     generateBtn: "Generate Hooks",
     modeAiUnavailable:
@@ -80,6 +85,11 @@ export const translations: Record<Lang, Translations> = {
     example2Label: "sports motivation",
     example2Topic: "sports motivation",
     footer: "HookAI · for content creators",
+    privacyLink: "Privacy",
+    termsLink: "Terms",
+    aiDisclosure: "AI-generated suggestions — review before publishing.",
+    shareBtn: "Share",
+    shareUnavailable: "Sharing is not available on this device",
     copyLabel: "Click to copy",
     copiedLabel: "Copied",
     modeLabels: {
@@ -97,7 +107,7 @@ export const translations: Record<Lang, Translations> = {
     subheadline:
       "AI-генератор хуков для TikTok, Reels и Shorts. Введите тему — получите готовый контент для съёмки.",
     placeholder: "Введите тему видео…",
-    hint: "Enter — отправить · Shift+Enter — новая строка",
+    hint: "Enter — генерация · Shift+Enter — новая строка",
     generating: "Генерация…",
     generateBtn: "Сгенерировать хуки",
     modeAiUnavailable:
@@ -129,6 +139,11 @@ export const translations: Record<Lang, Translations> = {
     example2Label: "мотивация для спорта",
     example2Topic: "мотивация для спорта",
     footer: "HookAI · для контент-креаторов",
+    privacyLink: "Конфиденциальность",
+    termsLink: "Условия",
+    aiDisclosure: "AI-подсказки — проверяйте перед публикацией.",
+    shareBtn: "Поделиться",
+    shareUnavailable: "Поделиться недоступно на этом устройстве",
     copyLabel: "Нажмите, чтобы скопировать",
     copiedLabel: "Скопировано",
     modeLabels: {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { copyToClipboard, hapticLight } from "@/lib/native";
 import { translations, type Lang } from "@/lib/translations";
 
 interface CopyableItemProps {
@@ -9,6 +10,9 @@ interface CopyableItemProps {
   variant?: "list" | "script";
   lang?: Lang;
 }
+
+const itemBase =
+  "group flex w-full items-start gap-3 rounded-xl border border-transparent px-3 py-3 text-left text-[15px] text-gray-800 transition-colors active:bg-[#f5f5f5] focus:outline-none focus:ring-2 focus:ring-gray-900/10";
 
 export function CopyableItem({
   text,
@@ -21,7 +25,8 @@ export function CopyableItem({
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(text);
+      await copyToClipboard(text);
+      void hapticLight();
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -31,13 +36,9 @@ export function CopyableItem({
 
   if (variant === "script") {
     return (
-      <button
-        type="button"
-        onClick={handleCopy}
-        className="group w-full rounded-[12px] border border-[#e8e8e8] bg-[#fafafa] p-4 text-left text-sm leading-relaxed text-gray-800 transition-all hover:border-gray-300 hover:bg-white hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-      >
-        <pre className="whitespace-pre-wrap font-sans">{text}</pre>
-        <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 group-hover:text-gray-700">
+      <button type="button" onClick={handleCopy} className={`${itemBase} touch-active flex-col`}>
+        <pre className="w-full whitespace-pre-wrap font-sans leading-relaxed">{text}</pre>
+        <span className="mt-2 inline-flex min-h-[20px] items-center gap-1.5 text-xs font-medium text-gray-500">
           {copied ? (
             <>
               <CheckIcon className="text-emerald-600" />
@@ -55,18 +56,14 @@ export function CopyableItem({
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className="group flex w-full items-start gap-3 rounded-[12px] border border-transparent px-3 py-2.5 text-left text-sm text-gray-800 transition-all hover:border-[#e8e8e8] hover:bg-[#fafafa] focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-    >
+    <button type="button" onClick={handleCopy} className={`${itemBase} touch-target touch-active`}>
       {index !== undefined && (
-        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-semibold text-gray-600 group-hover:bg-gray-200">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-semibold text-gray-600">
           {index}
         </span>
       )}
-      <span className="flex-1 leading-snug">{text}</span>
-      <span className="mt-0.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100">
+      <span className="min-w-0 flex-1 leading-snug">{text}</span>
+      <span className="mt-1 shrink-0">
         {copied ? (
           <CheckIcon className="text-emerald-600" />
         ) : (

@@ -3,7 +3,3 @@ export interface GenerateResponse {
   titles: string[];
   script: string;
 }
-
-export interface GenerateRequest {
-  topic: string;
-}

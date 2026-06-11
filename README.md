@@ -2,13 +2,25 @@
 
 AI-генератор вирусных хуков для TikTok, Reels и Shorts.
 
-**Frontend-only** — без backend, всё в браузере.
+**Frontend-only** — без backend, всё в браузере.  
+**iOS** — нативная обёртка через Capacitor для App Store.
 
-## Запуск
+## Запуск (веб)
 
 ```bash
 npm install
 npm run dev
+```
+
+## App Store (iOS)
+
+Полная инструкция: **[APP_STORE.md](./APP_STORE.md)**
+
+```bash
+cp .env.example .env.local   # добавьте NEXT_PUBLIC_GEMINI_API_KEY
+node scripts/generate-icons.mjs
+npx @capacitor/assets generate --ios
+npm run ios                  # откроет Xcode
 ```
 
 ## Бесплатная генерация
