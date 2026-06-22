@@ -69,7 +69,7 @@ Or open manually: `ios/App/App.xcodeproj`
 
 Host `docs/PRIVACY_POLICY.md` via **GitHub Pages** (see below) and paste the URL in App Store Connect.
 
-**Your URL after setup:** `https://haranilov.github.io/AI-App/PRIVACY_POLICY`
+**Your URL after setup:** `https://haranilov.github.io/AI-App/PRIVACY_POLICY.html`
 
 #### Enable GitHub Pages
 
