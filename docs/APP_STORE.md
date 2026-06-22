@@ -75,7 +75,7 @@ Host `docs/PRIVACY_POLICY.md` via **GitHub Pages** (see below) and paste the URL
 
 1. Push the `docs/` folder to GitHub (`git push`)
 2. Open [github.com/haranilov/AI-App/settings/pages](https://github.com/haranilov/AI-App/settings/pages)
-3. **Build and deployment** → Source: **Deploy from a branch**
+3. **Build and deployment** → Source: **Deploy from a branch** (not GitHub Actions)
 4. Branch: **main** → Folder: **/docs** → **Save**
 5. Wait 1–2 minutes until the site is live
 6. Open the URL above and confirm the policy renders
