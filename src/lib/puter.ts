@@ -1,5 +1,7 @@
 /** Load Puter.js — free in-browser AI without a developer API key */
 
+import { t } from "@/lib/translations";
+
 declare global {
   interface Window {
     puter?: {
@@ -15,9 +17,12 @@ declare global {
 
 let loadPromise: Promise<NonNullable<Window["puter"]>> | null = null;
 
+/**
+ * Loads Puter.js for in-browser AI without a developer API key.
+ */
 export function loadPuter(): Promise<NonNullable<Window["puter"]>> {
   if (typeof window === "undefined") {
-    return Promise.reject(new Error("Puter is only available in the browser"));
+    return Promise.reject(new Error(t.errorPuterBrowserOnly));
   }
 
   if (window.puter?.ai?.chat) {
@@ -29,7 +34,7 @@ export function loadPuter(): Promise<NonNullable<Window["puter"]>> {
       const existing = document.querySelector('script[data-hookai-puter]');
       if (existing) {
         existing.addEventListener("load", () => waitReady(resolve, reject));
-        existing.addEventListener("error", () => reject(new Error("Failed to load Puter.js")));
+        existing.addEventListener("error", () => reject(new Error(t.errorPuterLoadFailed)));
         return;
       }
 
@@ -38,7 +43,7 @@ export function loadPuter(): Promise<NonNullable<Window["puter"]>> {
       script.async = true;
       script.dataset.hookaiPuter = "1";
       script.onload = () => waitReady(resolve, reject);
-      script.onerror = () => reject(new Error("Failed to load Puter.js"));
+      script.onerror = () => reject(new Error(t.errorPuterLoadFailed));
       document.head.appendChild(script);
     });
   }
@@ -57,7 +62,7 @@ function waitReady(
       return;
     }
     if (attempts++ > 50) {
-      reject(new Error("Puter.js failed to initialize"));
+      reject(new Error(t.errorPuterInitFailed));
       return;
     }
     setTimeout(tick, 100);
@@ -65,10 +70,14 @@ function waitReady(
   tick();
 }
 
+/**
+ * Extracts text content from a Puter.js chat response.
+ * @param response - Raw Puter API response
+ */
 export function extractPuterText(response: unknown): string {
   if (typeof response === "string") return response;
   if (!response || typeof response !== "object") {
-    throw new Error("Empty Puter response");
+    throw new Error(t.errorEmptyPuterResponse);
   }
 
   const r = response as Record<string, unknown>;
@@ -85,5 +94,5 @@ export function extractPuterText(response: unknown): string {
   const fromChoice = choices?.[0]?.message?.content;
   if (fromChoice) return fromChoice;
 
-  throw new Error("Could not parse Puter response");
+  throw new Error(t.errorParsePuterResponse);
 }

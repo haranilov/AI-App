@@ -1,0 +1,27 @@
+# Project Standards & Rules
+
+## Language & Localization
+- **Everything must be in English:** Source code, comments, commit messages, documentation, and UI strings.
+- **i18n:** No hardcoded user-facing strings. Use a dedicated i18n layer.
+
+## Architecture & Code Quality
+- **File Size Limit:** Max 250 lines per file. If a file exceeds this, split it into smaller modules.
+- **Patterns:** Use SOLID principles, Clean Architecture, and clear design patterns (e.g., Director, Observer, Strategy).
+- **Code Style:** Use declarative style. Avoid callback hell and deep nested conditional statements.
+- **Responsibility:** Adhere to the Single Responsibility Principle (SRP).
+- **Documentation:** Use JSDoc for all exported functions and classes.
+- **Security:** No secrets or API keys in source code. Use environment variables (.env).
+
+## Development Stack & Environment
+- **Stack:** [Insert your stack, e.g., Next.js, TypeScript, TailwindCSS]
+- **Responsiveness:** Ensure full support for target devices (e.g., safe-area-inset, touch interactions).
+
+## Commands
+- `npm install`: Install dependencies.
+- `npm run build`: Production build.
+- `npm run dev`: Local development environment.
+
+## AI Assistance (Cursor Behavior)
+- Always prioritize clean, maintainable, and extensible code.
+- For complex features, describe the module structure before writing the implementation.
+- Maintain consistent naming conventions (camelCase for JS/TS).

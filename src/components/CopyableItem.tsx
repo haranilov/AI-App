@@ -1,23 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { translations, type Lang } from "@/lib/translations";
+import { t } from "@/lib/translations";
 
 interface CopyableItemProps {
   text: string;
   index?: number;
   variant?: "list" | "script";
-  lang?: Lang;
 }
 
+/**
+ * Click-to-copy row for a generated hook, title, or script block.
+ * @param props - Item text and display variant
+ */
 export function CopyableItem({
   text,
   index,
   variant = "list",
-  lang = "en",
 }: CopyableItemProps) {
   const [copied, setCopied] = useState(false);
-  const t = translations[lang];
 
   async function handleCopy() {
     try {
@@ -34,13 +35,13 @@ export function CopyableItem({
       <button
         type="button"
         onClick={handleCopy}
-        className="group w-full rounded-[12px] border border-[#e8e8e8] bg-[#fafafa] p-4 text-left text-sm leading-relaxed text-gray-800 transition-all hover:border-gray-300 hover:bg-white hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+        className="group w-full rounded-[12px] border border-border bg-card-muted p-4 text-left text-sm leading-relaxed text-text-secondary transition-all hover:border-text-faint hover:bg-card hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
       >
         <pre className="whitespace-pre-wrap font-sans">{text}</pre>
-        <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 group-hover:text-gray-700">
+        <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-text-muted group-hover:text-text-secondary">
           {copied ? (
             <>
-              <CheckIcon className="text-emerald-600" />
+              <CheckIcon className="text-success" />
               {t.copiedLabel}
             </>
           ) : (
@@ -58,19 +59,19 @@ export function CopyableItem({
     <button
       type="button"
       onClick={handleCopy}
-      className="group flex w-full items-start gap-3 rounded-[12px] border border-transparent px-3 py-2.5 text-left text-sm text-gray-800 transition-all hover:border-[#e8e8e8] hover:bg-[#fafafa] focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+      className="group flex w-full items-start gap-3 rounded-[12px] border border-transparent px-3 py-2.5 text-left text-sm text-text-secondary transition-all hover:border-border hover:bg-card-muted focus:outline-none focus:ring-2 focus:ring-ring"
     >
       {index !== undefined && (
-        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-semibold text-gray-600 group-hover:bg-gray-200">
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-badge-bg text-xs font-semibold text-text-muted group-hover:bg-icon-bg">
           {index}
         </span>
       )}
       <span className="flex-1 leading-snug">{text}</span>
       <span className="mt-0.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100">
         {copied ? (
-          <CheckIcon className="text-emerald-600" />
+          <CheckIcon className="text-success" />
         ) : (
-          <CopyIcon className="text-gray-400" />
+          <CopyIcon className="text-text-faint" />
         )}
       </span>
     </button>
@@ -85,6 +86,7 @@ function CopyIcon({ className = "" }: { className?: string }) {
       viewBox="0 0 24 24"
       stroke="currentColor"
       strokeWidth={2}
+      aria-hidden="true"
     >
       <path
         strokeLinecap="round"
@@ -103,6 +105,7 @@ function CheckIcon({ className = "" }: { className?: string }) {
       viewBox="0 0 24 24"
       stroke="currentColor"
       strokeWidth={2}
+      aria-hidden="true"
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
     </svg>
