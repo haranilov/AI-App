@@ -80,6 +80,8 @@ Host `docs/PRIVACY_POLICY.md` via **GitHub Pages** (see below) and paste the URL
 5. Wait 1–2 minutes until the site is live
 6. Open the URL above and confirm the policy renders
 
+> **Note:** Use the project URL `haranilov.github.io/AI-App/...`, not `haranilov.github.io` alone.
+
 Example: `https://yourdomain.com/privacy`
 
 ### App description (suggested)
