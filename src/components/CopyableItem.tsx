@@ -2,26 +2,20 @@
 
 import { useState } from "react";
 import { copyToClipboard, hapticLight } from "@/lib/native";
-import { translations, type Lang } from "@/lib/translations";
+import { t } from "@/lib/translations";
 
 interface CopyableItemProps {
   text: string;
   index?: number;
   variant?: "list" | "script";
-  lang?: Lang;
 }
 
 const itemBase =
-  "group flex w-full items-start gap-3 rounded-xl border border-transparent px-3 py-3 text-left text-[15px] text-gray-800 transition-colors active:bg-[#f5f5f5] focus:outline-none focus:ring-2 focus:ring-gray-900/10";
+  "group flex w-full items-start gap-3 rounded-xl border border-transparent px-3 py-3 text-left text-[15px] text-gray-800 transition-colors active:bg-[#f5f5f5] focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:text-gray-200 dark:active:bg-neutral-800 dark:focus:ring-white/10";
 
-export function CopyableItem({
-  text,
-  index,
-  variant = "list",
-  lang = "en",
-}: CopyableItemProps) {
+/** Clickable row that copies its text to the clipboard. */
+export function CopyableItem({ text, index, variant = "list" }: CopyableItemProps) {
   const [copied, setCopied] = useState(false);
-  const t = translations[lang];
 
   async function handleCopy() {
     try {
@@ -82,6 +76,7 @@ function CopyIcon({ className = "" }: { className?: string }) {
       viewBox="0 0 24 24"
       stroke="currentColor"
       strokeWidth={2}
+      aria-hidden
     >
       <path
         strokeLinecap="round"
@@ -100,6 +95,7 @@ function CheckIcon({ className = "" }: { className?: string }) {
       viewBox="0 0 24 24"
       stroke="currentColor"
       strokeWidth={2}
+      aria-hidden
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
     </svg>

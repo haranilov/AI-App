@@ -1,5 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 
+/** Copies text to the clipboard (native or web). */
 export async function copyToClipboard(text: string): Promise<void> {
   if (Capacitor.isNativePlatform()) {
     const { Clipboard } = await import("@capacitor/clipboard");
@@ -9,6 +10,10 @@ export async function copyToClipboard(text: string): Promise<void> {
   await navigator.clipboard.writeText(text);
 }
 
+/**
+ * Shares text via the native share sheet or Web Share API.
+ * @returns True when a share dialog was shown.
+ */
 export async function shareText(title: string, text: string): Promise<boolean> {
   if (Capacitor.isNativePlatform()) {
     const { Share } = await import("@capacitor/share");
@@ -22,6 +27,7 @@ export async function shareText(title: string, text: string): Promise<boolean> {
   return false;
 }
 
+/** Triggers a light haptic tap on native platforms. */
 export async function hapticLight(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   try {
@@ -32,13 +38,18 @@ export async function hapticLight(): Promise<void> {
   }
 }
 
+/** Configures native shell UI (status bar, etc.). */
 export async function initNativeShell(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
 
-  const { StatusBar, Style } = await import("@capacitor/status-bar");
-  await StatusBar.setStyle({ style: Style.Light });
+  document.documentElement.classList.add("native-app");
+
+  const { getStoredTheme } = await import("@/lib/theme");
+  const { syncNativeStatusBar } = await import("@/lib/nativeStatusBar");
+  await syncNativeStatusBar(getStoredTheme());
 }
 
+/** Dismisses the on-screen keyboard. */
 export async function dismissKeyboard(): Promise<void> {
   if (Capacitor.isNativePlatform()) {
     const { Keyboard } = await import("@capacitor/keyboard");

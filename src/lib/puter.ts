@@ -15,6 +15,7 @@ declare global {
 
 let loadPromise: Promise<NonNullable<Window["puter"]>> | null = null;
 
+/** Loads Puter.js for free in-browser AI (browser only). */
 export function loadPuter(): Promise<NonNullable<Window["puter"]>> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Puter is only available in the browser"));
@@ -65,6 +66,7 @@ function waitReady(
   tick();
 }
 
+/** Extracts plain text from a Puter.ai chat response object. */
 export function extractPuterText(response: unknown): string {
   if (typeof response === "string") return response;
   if (!response || typeof response !== "object") {

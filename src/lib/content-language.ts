@@ -1,9 +1,9 @@
-import type { Lang } from "@/lib/translations";
+import type { TemplateLang } from "@/lib/generate/types";
 
 export interface DetectedContentLanguage {
-  /** For built-in template fallback (ru | en) */
-  templateLang: Lang;
-  /** Human-readable hint for AI prompts */
+  /** For built-in template fallback (ru | en). */
+  templateLang: TemplateLang;
+  /** Human-readable hint for AI prompts. */
   label: string;
 }
 
@@ -13,8 +13,9 @@ function countLetters(text: string, pattern: RegExp): number {
 }
 
 /**
- * Detect the dominant script/language of user input.
+ * Detects the dominant script/language of user input.
  * AI prompts also instruct the model to match the topic language directly.
+ * @param text - User-entered topic text.
  */
 export function detectContentLanguage(text: string): DetectedContentLanguage {
   const sample = text.trim();

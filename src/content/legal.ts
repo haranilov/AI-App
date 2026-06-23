@@ -49,7 +49,7 @@ export const privacyPolicy: LegalDoc = {
     },
     {
       title: "Contact",
-      body: ["Questions about privacy: support@hookai.app"],
+      body: ["Questions about privacy: haranilov@gmail.com"],
     },
   ],
 };
@@ -102,7 +102,7 @@ export const termsOfService: LegalDoc = {
     },
     {
       title: "Contact",
-      body: ["Support: support@hookai.app"],
+      body: ["Support: haranilov@gmail.com"],
     },
   ],
 };

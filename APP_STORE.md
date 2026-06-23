@@ -42,7 +42,7 @@ This builds the web app, syncs to iOS, and opens Xcode.
 1. Open `ios/App/App.xcworkspace`
 2. Select **App** target → **Signing & Capabilities**
 3. Choose your **Team**
-4. Set unique **Bundle Identifier** if needed (default: `com.hookai.app`)
+4. Set unique **Bundle Identifier** if needed (default: `com.hookgen.app`)
 
 ## 5. Test on a real device
 
@@ -60,7 +60,7 @@ Create a new app at [appstoreconnect.apple.com](https://appstoreconnect.apple.co
 | **Name** | HookAI |
 | **Subtitle** | Viral hooks for short videos |
 | **Category** | Productivity or Photo & Video |
-| **Bundle ID** | com.hookai.app |
+| **Bundle ID** | com.hookgen.app |
 | **Privacy Policy URL** | Host `/privacy/` page or use your domain |
 
 ### Description (example)

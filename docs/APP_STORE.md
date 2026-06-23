@@ -17,7 +17,7 @@ Step-by-step instructions to build HookAI and submit it to the Apple App Store.
 | `resources/` | Source app icon and splash images |
 | `capacitor.config.ts` | Capacitor settings |
 
-**Bundle ID:** `com.hookai.app`  
+**Bundle ID:** `com.hookgen.app`  
 **App name:** HookAI  
 **Version:** 1.0
 
@@ -43,7 +43,7 @@ Or open manually: `ios/App/App.xcodeproj`
 1. Select the **App** target in the left sidebar
 2. Open **Signing & Capabilities**
 3. Select your **Team** (Apple Developer account)
-4. Confirm **Bundle Identifier** is `com.hookai.app` (change if already taken)
+4. Confirm **Bundle Identifier** is `com.hookgen.app`
 5. Enable **Automatically manage signing**
 
 ## 4. Test on a device or simulator
@@ -60,7 +60,7 @@ Or open manually: `ios/App/App.xcodeproj`
    - **Platform:** iOS
    - **Name:** HookAI
    - **Primary Language:** English
-   - **Bundle ID:** com.hookai.app
+   - **Bundle ID:** com.hookgen.app
    - **SKU:** hookai-ios-001
 
 ## 6. Required metadata

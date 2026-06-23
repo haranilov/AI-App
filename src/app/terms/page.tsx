@@ -1,10 +1,12 @@
 import { LegalPage } from "@/components/LegalPage";
 import { termsOfService } from "@/content/legal";
+import { t } from "@/lib/translations";
 
 export const metadata = {
-  title: "Terms of Service — HookAI",
+  title: t.termsPageTitle,
 };
 
+/** Terms of service page. */
 export default function TermsPage() {
-  return <LegalPage doc={termsOfService} backLabel="Back" />;
+  return <LegalPage doc={termsOfService} />;
 }

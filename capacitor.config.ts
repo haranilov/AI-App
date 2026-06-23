@@ -2,11 +2,11 @@ import type { CapacitorConfig } from "@capacitor/cli";
 import { KeyboardResize } from "@capacitor/keyboard";
 
 const config: CapacitorConfig = {
-  appId: "com.hookai.app",
+  appId: "com.hookgen.app",
   appName: "HookAI",
   webDir: "out",
   ios: {
-    contentInset: "automatic",
+    contentInset: "never",
     scrollEnabled: true,
     backgroundColor: "#fafafa",
   },
